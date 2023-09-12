@@ -53,11 +53,49 @@ def run_discord_bot(token: str):
         str_data = [server_id, server_name, username, user_message, channel, time]
 
         print(f"{username} said: '{user_message}' ({channel}) ({time}) in {server_name} ({server_id})")
-        with open('log'+server_id+'.csv', 'a', encoding='UTF8') as f:
+        with open('log' + server_id + '.csv', 'a', encoding='UTF8') as f:
             # create csv writer
             writer = csv.writer(f)
 
             writer.writerow(str_data)
+
+    @client.event
+    async def on_message_edit(before, after):
+        """Handle the message edit"""
+        # make sure the author is not the bot to prevent inifinite loop
+        if before.author == client.user or after.author == client.user:
+            return
+
+        server_id = str(after.guild.id)
+        server_name = str(after.guild)
+        username = str(after.author)
+        after_message = str(after.content)
+        before_message = str(before.content)
+        channel = str(after.channel)
+        time = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+        str_data = [server_id, server_name, username, after_message, channel, time]
+
+        print(f"{username} said: '{after_message}' ({channel}) ({time}) in {server_name} ({server_id})")
+        with open('log' + server_id + '.csv', 'a', encoding='UTF8') as f:
+            # create csv writer
+            writer = csv.writer(f)
+
+            writer.writerow(str_data)
+
+        await after.channel.send(f'{username} edited message {before_message} to read {after_message}')
+
+    @client.event
+    async def on_message_delete(message):
+        """Handle the message edit"""
+        # make sure the author is not the bot to prevent inifinite loop
+        if message.author == client.user:
+            return
+
+        username = str(message.author)
+        after_message = str(message.content)
+
+        await message.channel.send(f'{username}\'s message was deleted. Original message: {after_message}')
 
     @client.hybrid_command(description='Find out your ping on Discord')
     async def get_ping(ctx):
@@ -119,6 +157,7 @@ def run_discord_bot(token: str):
     async def get_message_log(interaction: discord.Interaction, num_messages: str, user: str):
         """gets the last num_messages messages from the message log from user (or all users if None)"""
         await interaction.response.defer()
+
         if not num_messages.isdigit():
             await interaction.response.send_message(f'Please make sure to set num_messages as an integer')
             return
@@ -147,7 +186,8 @@ def run_discord_bot(token: str):
                     channel = message_data[4]
                     time = message_data[5]
                     if guild_id == str(server_id):
-                        await interaction.channel.send(f'{username} sent in {channel} at {time} the message: {usr_message}')
+                        await interaction.channel.send(
+                            f'{username} sent in {channel} at {time} the message: {usr_message}')
         else:
             for num in range(1, real_num):
                 message = messages[-num]
