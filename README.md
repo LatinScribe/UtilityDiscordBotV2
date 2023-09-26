@@ -4,6 +4,11 @@ A Python based Discord bot!
 ## Description and functions
 This Discord bot is designed to fill niche roles in managing a Discord server based on my own experience.
 
+** NEW IN VERSION 2.0**
+- Message logs saved seperately based on server, and is accessible only to members of the server
+- Added get all qoutes function for checking
+- Added Message delete and Message editing detection and logging
+
 - Supports message logging:
 messages sent in channels which the bot has access to read are saved to the log.csv file. Tired of that person who keeps on deleting messages, or want to have a backup of the messages sent on a server, this is the way to do it!
 - Serverwide access to the message log (get_message_log):
