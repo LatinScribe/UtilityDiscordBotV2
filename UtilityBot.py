@@ -12,7 +12,7 @@ import os
 intents = discord.Intents.default()
 intents.message_content = True
 
-QOUTES = ['DefaultQuote1', 'DefaultQuote2', 'DefaultQuote3'
+QOUTES = ['Example qoute 1', 'Example qoute 2'
           ]
 
 client = commands.Bot(command_prefix='/', intents=intents)
@@ -37,7 +37,7 @@ def run_discord_bot(token: str):
             print(e)
 
     @client.event
-    async def on_message(message):
+    async def on_message(message: discord.Message):
         """Handle the messages"""
         # make sure the author is not the bot to prevent inifinite loop
         if message.author == client.user:
@@ -60,7 +60,7 @@ def run_discord_bot(token: str):
             writer.writerow(str_data)
 
     @client.event
-    async def on_message_edit(before, after):
+    async def on_message_edit(before: discord.Message, after: discord.Message):
         """Handle the message edit"""
         # make sure the author is not the bot to prevent inifinite loop
         if before.author == client.user or after.author == client.user:
@@ -83,27 +83,47 @@ def run_discord_bot(token: str):
 
             writer.writerow(str_data)
 
-        await after.channel.send(f'{username} edited message {before_message} to read {after_message}')
+        embed = discord.Embed(title=f'{str(after.author)} edited a Message', colour=discord.Colour.gold())
+        embed.set_author(name=after.author, icon_url=after.author.avatar)
+        embed.add_field(name="Edited Message", value=after_message)
+        embed.add_field(name="Original Message", value=before_message, inline=False)
+        # await after.channel.send(f'{username} edited message {before_message} to read {after_message}')
+        await after.channel.send(embed=embed)
 
     @client.event
-    async def on_message_delete(message):
+    async def on_message_delete(message: discord.Message):
         """Handle the message edit"""
         # make sure the author is not the bot to prevent inifinite loop
         if message.author == client.user:
             return
 
-        username = str(message.author)
-        after_message = str(message.content)
+        deleter = None
+        async for entry in message.guild.audit_logs(limit=1):
+            deleter = entry.user
 
-        await message.channel.send(f'{username}\'s message was deleted. Original message: {after_message}')
+        username = str(message.author)
+        pfp = deleter.avatar
+        id = str(message.author.id)
+        print(id)
+        after_message = str(message.content)
+        # pfp = message.guild.get_member(id).avatar_url
+        print(pfp)
+
+        embed = discord.Embed(title=f'{str(deleter)} Deleted a Message', description=f'{username}\'s message was deleted!', colour=discord.Colour.red())
+        embed.set_author(name=deleter, icon_url=pfp)
+        embed.add_field(name="Deleted Message", value=after_message)
+        # embed.set_image(url=pfp)
+
+        # await message.channel.send(f'{username}\'s message was deleted. Original message: {after_message}')
+        await message.channel.send(embed=embed)
 
     @client.hybrid_command(description='Find out your ping on Discord')
-    async def get_ping(ctx):
+    async def get_ping(ctx: discord.ext.commands.Context):
         """Pings the user"""
         await ctx.send(f'Ping {round(client.latency * 1000)}ms')
 
     @client.hybrid_command(description='Get a random qoute')
-    async def quote(ctx):
+    async def quote(ctx: discord.ext.commands.Context):
         """Get a random quote"""
         if os.path.isfile('quotes.txt'):
             with open('quotes.txt') as f:
@@ -114,21 +134,35 @@ def run_discord_bot(token: str):
                     usr_qoute = random.choice(lines)
         else:
             usr_qoute = random.choice(QOUTES)
-        await ctx.send(usr_qoute)
+        embed = discord.Embed(title=usr_qoute, colour=discord.Colour.random())
+        await ctx.send(embed=embed)
+        # await ctx.send(usr_qoute)
 
     @client.hybrid_command(description='Get all saved quotes')
-    async def all_quote(ctx):
-        """Get all saved quotes"""
-        if os.path.isfile('quotes.txt'):
-            with open('quotes.txt') as f:
+    async def all_quote(ctx: discord.ext.commands.Context):
+        """Get a random qoute"""
+        await ctx.defer()
+
+        embed = discord.Embed(title="All Saved Qoutes", colour=discord.Colour.random())
+
+        if os.path.isfile('qoutes.txt'):
+            with open('qoutes.txt') as f:
                 lines = f.readlines()
                 if not lines:
-                    usr_qoute = f'The quotes.txt file is empty, please first add qoutes using /add_qoute'
+                    usr_qoute = f'The qoutes.txt file is empty, please first add qoutes using /add_qoute'
+                    embed.add_field(name="ERROR", value=usr_qoute)
+                    await ctx.send(embed=embed)
                 else:
-                    usr_qoute = lines
+                    for line in range(0, len(lines)):
+                        embed.add_field(name=f'Qoute {line}', value=lines[line], inline=False)
+
         else:
             usr_qoute = QOUTES
-        await ctx.send(usr_qoute)
+            for line in range(0, len(usr_qoute)):
+                embed.add_field(name=f'Qoute {line}', value=usr_qoute[line], inline=False)
+
+        await ctx.send(embed=embed)
+        # await ctx.send(usr_qoute)
 
     @client.tree.command(name='ping_user')
     @app_commands.describe(who_to_ping="who would you like to ping ALOT", times="how many time to ping",
@@ -136,7 +170,9 @@ def run_discord_bot(token: str):
     async def ping_user(interaction: discord.Interaction, who_to_ping: str, times: str, message: str):
         """Pings the user up to 100 times"""
         if not times.isdigit():
-            await interaction.response.send_message(f'Please make sure to set times as an integer')
+            embed = discord.Embed(title="Please make sure to set times as an integer", colour=interaction.user.accent_color)
+            await interaction.response.send_message(embed=embed)
+            # await interaction.response.send_message(f'Please make sure to set times as an integer')
             return
 
         num_times = int(times)
@@ -147,9 +183,12 @@ def run_discord_bot(token: str):
             for _ in range(min(num_times, 100)):
                 await interaction.channel.send(f'{message} {who_to_ping}')
 
-            await interaction.followup.send('Pinging Complete')
+            embed = discord.Embed(title="Pinging Complete", colour=interaction.user.accent_color)
+            await interaction.followup.send(embed=embed)
         else:
-            await interaction.response.send_message(f'Please make sure to @ the user')
+            # await interaction.response.send_message(f'Please make sure to @ the user')
+            embed = discord.Embed(title="Please make sure to @ the user", colour=interaction.user.accent_color)
+            await interaction.response.send_message(embed=embed)
 
     @client.tree.command(name='get_message_log')
     @app_commands.describe(num_messages="How many messages back would you like (max50)",
@@ -159,13 +198,18 @@ def run_discord_bot(token: str):
         await interaction.response.defer()
 
         if not num_messages.isdigit():
-            await interaction.response.send_message(f'Please make sure to set num_messages as an integer')
+            embed = discord.Embed(title="Please make sure to set num_messages as an integer", colour=interaction.user.accent_color)
+            await interaction.response.send_message(embed=embed)
+            # await interaction.response.send_message(f'Please make sure to set num_messages as an integer')
             return
 
         guild_id = str(interaction.guild_id)
 
         if not os.path.isfile('log' + guild_id + '.csv'):
-            await interaction.response.send_message(f'The message log for this server is empty')
+            embed = discord.Embed(title="The message log for this server is empty",
+                                  colour=interaction.user.accent_color)
+            await interaction.response.send_message(embed=embed)
+            # await interaction.response.send_message(f'The message log for this server is empty')
             return
 
         num_times = (int(num_messages)) * 2 + 1
@@ -203,7 +247,9 @@ def run_discord_bot(token: str):
                         await interaction.channel.send(
                             f'{username} sent in {channel} at {time} the message: {usr_message}')
 
-        await interaction.followup.send(f'Message log complete')
+        embed = discord.Embed(title="Message log complete", colour=interaction.user.accent_color)
+        await interaction.followup.send(embed=embed)
+        # await interaction.followup.send(f'Message log complete')
 
     @client.tree.command(name='add_quote')
     @app_commands.describe(quote="Quote you would like to add")
@@ -213,7 +259,10 @@ def run_discord_bot(token: str):
         with open('quotes.txt', 'a') as f:
             f.write(quote)
             f.write('\n')
-        await interaction.followup.send('Quote has been added')
+        # await interaction.followup.send('Quote has been added')
+        embed = discord.Embed(title="Quote has been added", colour=interaction.user.accent_color)
+        await interaction.followup.send(embed=embed)
+
 
     # @client.command()
     # async def test(ctx):
