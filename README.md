@@ -9,6 +9,10 @@ This Discord bot is designed to fill niche roles in managing a Discord server ba
 - Added get all qoutes function for checking
 - Added Message delete and Message editing detection and logging
 
+** Version 2 Extension **
+- Modified bot interaction to use embeds
+- Prettified bot returns!
+
 ** From Version 1.0 **
 - Supports message logging:
 messages sent in channels which the bot has access to read are saved to the log.csv file. Tired of that person who keeps on deleting messages, or want to have a backup of the messages sent on a server, this is the way to do it!
