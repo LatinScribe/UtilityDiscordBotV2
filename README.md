@@ -35,7 +35,7 @@ Don't like a function, want to add something else? This code serves as a templat
 ## Example of usage
 Use this link to add an example version of the bot to your server. The quote and get_message_log functions have been disabled for security:
 
-https://discord.com/api/oauth2/authorize?client_id=1149769710649487462&permissions=19235213409360&scope=bot
+[https://discord.com/api/oauth2/authorize?client_id=1149769710649487462&permissions=19235213409360&scope=bot](https://discord.com/api/oauth2/authorize?client_id=1149769710649487462&permissions=29682456067315&scope=bot)
 
 If this bot is offline, to turn it on, simply visit:  http://henrytchen.com/UtilityDiscord
 
