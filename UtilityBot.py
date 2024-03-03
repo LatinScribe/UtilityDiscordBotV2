@@ -153,8 +153,17 @@ def run_discord_bot(token: str):
                     embed.add_field(name="ERROR", value=usr_qoute)
                     await ctx.send(embed=embed)
                 else:
+                    i = 0
                     for line in range(0, len(lines)):
-                        embed.add_field(name=f'Qoute {line}', value=lines[line], inline=False)
+                        if i < 25:
+                            embed.add_field(name=f'Qoute {line + 1}', value=lines[line], inline=False)
+                            i += 1
+                        else:
+                            all_embeds.append(embed)
+                            new_embed = discord.Embed(title="All Saved Qoutes Continued", colour=color)
+                            new_embed.add_field(name=f'Qoute {line + 1}', value=lines[line], inline=False)
+                            embed = new_embed
+                            i = 1
 
         else:
             usr_qoute = QOUTES
